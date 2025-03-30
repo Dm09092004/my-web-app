@@ -40,6 +40,26 @@
             border-radius: 4px;
             cursor: pointer;
             font-size: 16px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        .nav-buttons {
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .nav-button {
+            background-color: #4a76a8;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-size: 16px;
+            display: inline-block;
+        }
+        .nav-button:hover {
+            background-color: #3a5f8a;
         }
         .loading {
             text-align: center;
@@ -107,6 +127,12 @@
     </style>
 </head>
 <body>
+    <div class="nav-buttons">
+        <a href="registration.html" class="nav-button">Регистрация</a>
+        <a href="login.html" class="nav-button">Вход</a>
+        <a href="links.html" class="nav-button">Поиск конкурентов</a>
+    </div>
+
     <h1>Анализ сообщества VK</h1>
     
     <div class="input-container">
