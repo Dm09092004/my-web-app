@@ -7,55 +7,96 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            max-width: 600px;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+        }
+        .account-container {
+            max-width: 800px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 30px;
+            background-color: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 15px;
         }
         .user-info {
-            background-color: #f5f5f5;
-            padding: 20px;
-            border-radius: 5px;
-            margin-bottom: 20px;
+            margin-top: 20px;
+        }
+        .info-row {
+            display: flex;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .info-label {
+            font-weight: bold;
+            width: 200px;
+            color: #555;
+        }
+        .info-value {
+            flex: 1;
         }
         .logout-btn {
             background-color: #f44336;
             color: white;
-            padding: 10px 15px;
+            padding: 10px 20px;
             border: none;
             border-radius: 4px;
             cursor: pointer;
+            margin-top: 20px;
+        }
+        .logout-btn:hover {
+            background-color: #d32f2f;
         }
     </style>
 </head>
 <body>
-    <h1>Личный кабинет</h1>
-    
-    <div id="userInfo" class="user-info">
-        <!-- Сюда загрузится информация о пользователе -->
+    <div class="account-container">
+        <h1>Личный кабинет</h1>
+        
+        <div id="userData" class="user-info">
+            <!-- Данные будут загружены через JavaScript -->
+        </div>
+        
+        <button id="logoutBtn" class="logout-btn">Выйти</button>
     </div>
-    
-    <button id="logoutBtn" class="logout-btn">Выйти</button>
 
     <script>
-        // Проверяем, авторизован ли пользователь
-        const currentUser = JSON.parse(sessionStorage.getItem('currentUser'));
-        
-        if (!currentUser) {
-            // Если пользователь не авторизован, перенаправляем на страницу регистрации
-            window.location.href = 'register.html';
-        } else {
+        document.addEventListener('DOMContentLoaded', function() {
+            const userDataElement = document.getElementById('userData');
+            const currentUser = JSON.parse(sessionStorage.getItem('currentUser'));
+            
+            if (!currentUser) {
+                // Если пользователь не авторизован, перенаправляем на страницу входа
+                window.location.href = 'login.html';
+                return;
+            }
+            
             // Отображаем информацию о пользователе
-            document.getElementById('userInfo').innerHTML = `
-                <h2>Добро пожаловать, ${currentUser.nickname}!</h2>
-                <p><strong>Дата регистрации:</strong> ${new Date(currentUser.registration_date).toLocaleString()}</p>
-                <p><strong>Ссылка на VK:</strong> <a href="${currentUser.vk_link}" target="_blank">${currentUser.vk_link}</a></p>
+            userDataElement.innerHTML = `
+                <div class="info-row">
+                    <div class="info-label">Никнейм:</div>
+                    <div class="info-value">${currentUser.nickname}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Дата регистрации:</div>
+                    <div class="info-value">${new Date(currentUser.registration_date).toLocaleString()}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Ссылка на VK сообщество:</div>
+                    <div class="info-value"><a href="${currentUser.vk_link}" target="_blank">${currentUser.vk_link}</a></div>
+                </div>
             `;
-        }
-        
-        // Обработчик кнопки выхода
-        document.getElementById('logoutBtn').addEventListener('click', function() {
-            sessionStorage.removeItem('currentUser');
-            window.location.href = 'register.html';
+            
+            // Обработчик кнопки выхода
+            document.getElementById('logoutBtn').addEventListener('click', function() {
+                sessionStorage.removeItem('currentUser');
+                window.location.href = 'login.html';
+            });
         });
     </script>
 </body>
