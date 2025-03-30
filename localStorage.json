@@ -1,0 +1,16 @@
+{
+  "users": [
+      {
+          "nickname": "gamer123",
+          "password": "secure123",
+          "vk_link": "https://vk.com/gaming_team",
+          "registration_date": "2023-05-18T14:25:30.123Z"
+      },
+      {
+          "nickname": "music_lover",
+          "password": "melody123",
+          "vk_link": "https://vk.com/music_fans",
+          "registration_date": "2023-05-18T15:10:45.456Z"
+      }
+  ]
+}
