@@ -3,101 +3,796 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Личный кабинет</title>
+    <title>Анализатор VK сообществ</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <style>
+        :root {
+            --primary-color: #4a76a8;
+            --secondary-color: #5e81a8;
+            --accent-color: #ff6b6b;
+            --light-bg: #f5f7fa;
+            --card-bg: #ffffff;
+            --text-color: #2c3e50;
+            --text-light: #7f8c8d;
+        }
+        
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f5f5f5;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--light-bg);
             margin: 0;
             padding: 0;
         }
-        .account-container {
-            max-width: 800px;
+        
+        .container {
+            max-width: 1200px;
             margin: 0 auto;
-            padding: 30px;
-            background-color: white;
+            padding: 20px;
+        }
+        
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 20px 0;
+            margin-bottom: 30px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
-        h1 {
-            color: #333;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 15px;
-        }
-        .user-info {
-            margin-top: 20px;
-        }
-        .info-row {
+        
+        .header-content {
             display: flex;
-            margin-bottom: 15px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #f0f0f0;
+            justify-content: space-between;
+            align-items: center;
         }
-        .info-label {
-            font-weight: bold;
-            width: 200px;
-            color: #555;
+        
+        h1 {
+            margin: 0;
+            font-size: 28px;
         }
-        .info-value {
-            flex: 1;
+        
+        .auth-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
         }
-        .logout-btn {
-            background-color: #f44336;
-            color: white;
-            padding: 10px 20px;
-            border: none;
+        
+        .btn {
+            padding: 8px 16px;
             border-radius: 4px;
             cursor: pointer;
-            margin-top: 20px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: none;
         }
-        .logout-btn:hover {
-            background-color: #d32f2f;
+        
+        .btn-primary {
+            background-color: var(--accent-color);
+            color: white;
+        }
+        
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid white;
+            color: white;
+        }
+        
+        .input-section {
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        input[type="text"] {
+            flex: 1;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        
+        .tab-container {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .tab.active {
+            border-bottom-color: var(--primary-color);
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .card-title {
+            margin-top: 0;
+            color: var(--primary-color);
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-item {
+            background-color: var(--light-bg);
+            border-radius: 6px;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin: 5px 0;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: var(--text-light);
+        }
+        
+        .chart-container {
+            height: 300px;
+            margin-bottom: 30px;
+        }
+        
+        .keywords-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .keyword {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 14px;
+        }
+        
+        .keyword.main {
+            background-color: var(--accent-color);
+            font-weight: 600;
+        }
+        
+        .posts-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .post-card {
+            border: 1px solid #eee;
+            border-radius: 6px;
+            padding: 15px;
+            transition: transform 0.3s ease;
+        }
+        
+        .post-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .post-date {
+            font-size: 12px;
+            color: var(--text-light);
+            margin-bottom: 8px;
+        }
+        
+        .post-text {
+            margin-bottom: 10px;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .post-stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            color: var(--text-light);
+        }
+        
+        .competitors-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .competitor-card {
+            border: 1px solid #eee;
+            border-radius: 6px;
+            padding: 15px;
+        }
+        
+        .competitor-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .competitor-link {
+            color: var(--primary-color);
+            font-size: 14px;
+            display: block;
+            margin-bottom: 10px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 18px;
+            color: var(--text-light);
+        }
+        
+        .error {
+            color: #e74c3c;
+            background-color: #ffebee;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        
+        .export-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
         }
     </style>
 </head>
 <body>
-    <div class="account-container">
-        <h1>Личный кабинет</h1>
-        
-        <div id="userData" class="user-info">
-            <!-- Данные будут загружены через JavaScript -->
+    <header>
+        <div class="container header-content">
+            <h1>Анализатор VK сообществ</h1>
+            <div class="auth-section">
+                <span id="userEmail">user@example.com</span>
+                <button class="btn btn-outline" id="logoutBtn">Выйти</button>
+            </div>
         </div>
-        
-        <button id="logoutBtn" class="logout-btn">Выйти</button>
+    </header>
+
+    <div class="container">
+        <div class="input-section">
+            <h2>Анализ сообщества</h2>
+            <p>Введите ссылку на сообщество или профиль VK для анализа</p>
+            <div class="input-group">
+                <input type="text" id="vkLink" placeholder="https://vk.com/groupname">
+                <button class="btn btn-primary" id="analyzeBtn">Анализировать</button>
+            </div>
+        </div>
+
+        <div class="tab-container">
+            <div class="tab active" data-tab="main">Основная информация</div>
+            <div class="tab" data-tab="posts">Анализ постов</div>
+            <div class="tab" data-tab="competitors">Конкуренты</div>
+        </div>
+
+        <div id="loading" class="loading">Загрузка данных...</div>
+        <div id="errorContainer" class="error" style="display: none;"></div>
+
+        <div id="mainTab" class="tab-content active">
+            <div class="card">
+                <h3 class="card-title">Общая информация</h3>
+                <div id="groupInfo"></div>
+            </div>
+
+            <div class="card">
+                <h3 class="card-title">Основные метрики</h3>
+                <div class="stats-grid" id="mainStats"></div>
+                <div class="chart-container">
+                    <canvas id="activityChart"></canvas>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3 class="card-title">Ключевая тематика</h3>
+                <div id="topicAnalysis"></div>
+                <div class="chart-container">
+                    <canvas id="topicsChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div id="postsTab" class="tab-content">
+            <div class="card">
+                <h3 class="card-title">Анализ последних постов</h3>
+                <div class="stats-grid" id="postStats"></div>
+                <div class="posts-list" id="postsList"></div>
+            </div>
+        </div>
+
+        <div id="competitorsTab" class="tab-content">
+            <div class="card">
+                <h3 class="card-title">Топ конкурентов</h3>
+                <p>На основе тематики вашего сообщества мы подобрали следующие конкурирующие сообщества:</p>
+                <div class="competitors-grid" id="competitorsList"></div>
+            </div>
+            
+            <div class="card">
+                <h3 class="card-title">Сравнительный анализ</h3>
+                <div class="chart-container">
+                    <canvas id="comparisonChart"></canvas>
+                </div>
+                <div class="export-buttons">
+                    <button class="btn btn-primary" id="exportCSV">Экспорт в CSV</button>
+                    <button class="btn btn-primary" id="exportPDF">Экспорт в PDF</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
+        // Текущие данные анализа
+        let currentAnalysis = null;
+        let competitorsAnalysis = [];
+        
+        // DOM элементы
+        const loadingElement = document.getElementById('loading');
+        const errorContainer = document.getElementById('errorContainer');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        // Инициализация
         document.addEventListener('DOMContentLoaded', function() {
-            const userDataElement = document.getElementById('userData');
+            // Проверка авторизации
             const currentUser = JSON.parse(sessionStorage.getItem('currentUser'));
-            
             if (!currentUser) {
-                // Если пользователь не авторизован, перенаправляем на страницу входа
                 window.location.href = 'login.html';
                 return;
             }
             
-            // Отображаем информацию о пользователе
-            userDataElement.innerHTML = `
-                <div class="info-row">
-                    <div class="info-label">Никнейм:</div>
-                    <div class="info-value">${currentUser.nickname}</div>
+            document.getElementById('userEmail').textContent = currentUser.email || currentUser.nickname;
+            
+            // Обработчики событий
+            analyzeBtn.addEventListener('click', analyzeCommunity);
+            logoutBtn.addEventListener('click', logout);
+            
+            // Переключение табов
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const tabId = this.getAttribute('data-tab');
+                    switchTab(tabId);
+                });
+            });
+            
+            // Кнопки экспорта
+            document.getElementById('exportCSV').addEventListener('click', exportToCSV);
+            document.getElementById('exportPDF').addEventListener('click', exportToPDF);
+            
+            // Скрываем loader по умолчанию
+            loadingElement.style.display = 'none';
+        });
+        
+        function switchTab(tabId) {
+            // Убираем активный класс у всех табов
+            tabs.forEach(tab => tab.classList.remove('active'));
+            tabContents.forEach(content => content.classList.remove('active'));
+            
+            // Добавляем активный класс выбранному табу
+            document.querySelector(`.tab[data-tab="${tabId}"]`).classList.add('active');
+            document.getElementById(`${tabId}Tab`).classList.add('active');
+        }
+        
+        async function analyzeCommunity() {
+            const vkLink = document.getElementById('vkLink').value.trim();
+            
+            if (!vkLink) {
+                showError('Пожалуйста, введите ссылку на сообщество');
+                return;
+            }
+            
+            try {
+                // Показываем загрузку
+                loadingElement.style.display = 'block';
+                errorContainer.style.display = 'none';
+                
+                // Получаем данные (в реальном приложении - API запросы)
+                currentAnalysis = await mockAnalyzeCommunity(vkLink);
+                competitorsAnalysis = await mockFindCompetitors(currentAnalysis.mainTopic);
+                
+                // Отображаем результаты
+                displayGroupInfo(currentAnalysis);
+                displayMainStats(currentAnalysis);
+                displayTopicAnalysis(currentAnalysis);
+                displayPostsAnalysis(currentAnalysis);
+                displayCompetitorsAnalysis(competitorsAnalysis);
+                
+            } catch (error) {
+                showError(`Ошибка при анализе: ${error.message}`);
+                console.error('Analysis error:', error);
+            } finally {
+                loadingElement.style.display = 'none';
+            }
+        }
+        
+        function displayGroupInfo(data) {
+            const groupInfoElement = document.getElementById('groupInfo');
+            
+            groupInfoElement.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 20px;">
+                    <img src="${data.photo_200}" alt="${data.name}" style="width: 100px; height: 100px; border-radius: 8px;">
+                    <div>
+                        <h3 style="margin: 0 0 5px 0;">${data.name}</h3>
+                        <p style="margin: 0 0 10px 0;"><a href="${data.link}" target="_blank">${data.link}</a></p>
+                        <p style="color: var(--text-light);">${data.description || 'Описание отсутствует'}</p>
+                    </div>
                 </div>
-                <div class="info-row">
-                    <div class="info-label">Дата регистрации:</div>
-                    <div class="info-value">${new Date(currentUser.registration_date).toLocaleString()}</div>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-value">${data.members_count.toLocaleString()}</div>
+                        <div class="stat-label">Подписчиков</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">${data.posts_count.toLocaleString()}</div>
+                        <div class="stat-label">Всего постов</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">${new Date(data.created_at * 1000).getFullYear()}</div>
+                        <div class="stat-label">Год создания</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">${data.is_closed ? 'Закрытое' : 'Открытое'}</div>
+                        <div class="stat-label">Тип сообщества</div>
+                    </div>
                 </div>
-                <div class="info-row">
-                    <div class="info-label">Ссылка на VK сообщество:</div>
-                    <div class="info-value"><a href="${currentUser.vk_link}" target="_blank">${currentUser.vk_link}</a></div>
+            `;
+        }
+        
+        function displayMainStats(data) {
+            const mainStatsElement = document.getElementById('mainStats');
+            
+            mainStatsElement.innerHTML = `
+                <div class="stat-item">
+                    <div class="stat-value">${data.avg_likes.toLocaleString()}</div>
+                    <div class="stat-label">Среднее лайков</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${data.avg_comments.toLocaleString()}</div>
+                    <div class="stat-label">Среднее комментариев</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${data.avg_reposts.toLocaleString()}</div>
+                    <div class="stat-label">Среднее репостов</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${data.avg_views.toLocaleString()}</div>
+                    <div class="stat-label">Среднее просмотров</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${data.engagement_rate}%</div>
+                    <div class="stat-label">Вовлеченность</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${data.posts_per_week}</div>
+                    <div class="stat-label">Постов в неделю</div>
                 </div>
             `;
             
-            // Обработчик кнопки выхода
-            document.getElementById('logoutBtn').addEventListener('click', function() {
-                sessionStorage.removeItem('currentUser');
-                window.location.href = 'login.html';
+            // График активности
+            const ctx = document.getElementById('activityChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Лайки', 'Комментарии', 'Репосты', 'Просмотры'],
+                    datasets: [{
+                        label: 'Средние показатели на пост',
+                        data: [data.avg_likes, data.avg_comments, data.avg_reposts, data.avg_views],
+                        backgroundColor: [
+                            'rgba(74, 118, 168, 0.7)',
+                            'rgba(94, 129, 168, 0.7)',
+                            'rgba(255, 107, 107, 0.7)',
+                            'rgba(46, 204, 113, 0.7)'
+                        ],
+                        borderColor: [
+                            'rgba(74, 118, 168, 1)',
+                            'rgba(94, 129, 168, 1)',
+                            'rgba(255, 107, 107, 1)',
+                            'rgba(46, 204, 113, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
             });
-        });
-    </script>
-</body>
-</html>
+        }
+        
+        function displayTopicAnalysis(data) {
+            const topicAnalysisElement = document.getElementById('topicAnalysis');
+            
+            let keywordsHTML = '';
+            data.top_keywords.forEach((keyword, index) => {
+                keywordsHTML += `<span class="keyword ${index === 0 ? 'main' : ''}">${keyword.word} (${keyword.count})</span>`;
+            });
+            
+            topicAnalysisElement.innerHTML = `
+                <p><strong>Основная направленность:</strong> ${data.mainTopic}</p>
+                <p><strong>Ключевые слова:</strong></p>
+                <div class="keywords-container">
+                    ${keywordsHTML}
+                </div>
+            `;
+            
+            // График тематики
+            const topicLabels = data.topic_distribution.map(t => t.topic);
+            const topicData = data.topic_distribution.map(t => t.value);
+            
+            const ctx = document.getElementById('topicsChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: topicLabels,
+                    datasets: [{
+                        data: topicData,
+                        backgroundColor: [
+                            'rgba(74, 118, 168, 0.7)',
+                            'rgba(94, 129, 168, 0.7)',
+                            'rgba(255, 107, 107, 0.7)',
+                            'rgba(46, 204, 113, 0.7)',
+                            'rgba(155, 89, 182, 0.7)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right'
+                        }
+                    }
+                }
+            });
+        }
+        
+        function displayPostsAnalysis(data) {
+            const postStatsElement = document.getElementById('postStats');
+            const postsListElement = document.getElementById('postsList');
+            
+            // Статистика по постам
+            postStatsElement.innerHTML = `
+                <div class="stat-item">
+                    <div class="stat-value">${data.posts_analyzed}</div>
+                    <div class="stat-label">Проанализировано постов</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${data.avg_post_length}</div>
+                    <div class="stat-label">Средняя длина поста</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${data.media_per_post}</div>
+                    <div class="stat-label">Медиа на пост</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${data.avg_time_between_posts}</div>
+                    <div class="stat-label">Частота публикаций</div>
+                </div>
+            `;
+            
+            // Список постов
+            let postsHTML = '';
+            data.recent_posts.forEach(post => {
+                const postDate = new Date(post.date * 1000).toLocaleDateString();
+                
+                postsHTML += `
+                    <div class="post-card">
+                        <div class="post-date">${postDate}</div>
+                        <div class="post-text">${post.text || '<i>Текст отсутствует</i>'}</div>
+                        <div class="post-stats">
+                            <span>❤️ ${post.likes}</span>
+                            <span>💬 ${post.comments}</span>
+                            <span>↩️ ${post.reposts}</span>
+                            <span>👁️ ${post.views}</span>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            postsListElement.innerHTML = postsHTML;
+        }
+        
+        function displayCompetitorsAnalysis(competitors) {
+            const competitorsListElement = document.getElementById('competitorsList');
+            
+            let competitorsHTML = '';
+            competitors.forEach(competitor => {
+                competitorsHTML += `
+                    <div class="competitor-card">
+                        <div class="competitor-name">${competitor.name}</div>
+                        <a href="${competitor.link}" class="competitor-link" target="_blank">${competitor.link}</a>
+                        <div class="stat-item" style="margin: 10px 0;">
+                            <div class="stat-value">${competitor.members_count.toLocaleString()}</div>
+                            <div class="stat-label">Подписчиков</div>
+                        </div>
+                        <p><strong>Направленность:</strong> ${competitor.topic}</p>
+                        <p><strong>ER:</strong> ${competitor.engagement_rate}%</p>
+                    </div>
+                `;
+            });
+            
+            competitorsListElement.innerHTML = competitorsHTML;
+            
+            // График сравнения
+            const ctx = document.getElementById('comparisonChart').getContext('2d');
+            
+            const labels = ['Ваше сообщество', ...competitors.map(c => c.name)];
+            const engagementData = [currentAnalysis.engagement_rate, ...competitors.map(c => c.engagement_rate)];
+            const membersData = [currentAnalysis.members_count, ...competitors.map(c => c.members_count)];
+            
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Вовлеченность (%)',
+                            data: engagementData,
+                            backgroundColor: 'rgba(255, 107, 107, 0.7)',
+                            borderColor: 'rgba(255, 107, 107, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Подписчики',
+                            data: membersData,
+                            backgroundColor: 'rgba(74, 118, 168, 0.7)',
+                            borderColor: 'rgba(74, 118, 168, 1)',
+                            borderWidth: 1,
+                            type: 'line',
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Вовлеченность (%)'
+                            }
+                        },
+                        y1: {
+                            position: 'right',
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Подписчики'
+                            },
+                            grid: {
+                                drawOnChartArea: false
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function exportToCSV() {
+            if (!currentAnalysis || !competitorsAnalysis.length) {
+                showError('Нет данных для экспорта');
+                return;
+            }
+            
+            // Подготовка данных
+            const headers = ['Параметр', 'Ваше сообщество', ...competitorsAnalysis.map(c => c.name)];
+            
+            const rows = [
+                ['Название', currentAnalysis.name, ...competitorsAnalysis.map(c => c.name)],
+                ['Ссылка', currentAnalysis.link, ...competitorsAnalysis.map(c => c.link)],
+                ['Подписчики', currentAnalysis.members_count, ...competitorsAnalysis.map(c => c.members_count)],
+                ['Вовлеченность (%)', currentAnalysis.engagement_rate, ...competitorsAnalysis.map(c => c.engagement_rate)],
+                ['Средние лайки', currentAnalysis.avg_likes, ...competitorsAnalysis.map(c => c.avg_likes)],
+                ['Основная тема', currentAnalysis.mainTopic, ...competitorsAnalysis.map(c => c.topic)]
+            ];
+            
+            // Создаем CSV
+            let csv = headers.join(';') + '\n';
+            rows.forEach(row => {
+                csv += row.join(';') + '\n';
+            });
+            
+            // Создаем ссылку для скачивания
+            const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `vk_analysis_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        
+        function exportToPDF() {
+            alert('В реальном приложении здесь будет экспорт в PDF');
+            // Для реализации можно использовать библиотеку jsPDF
+        }
+        
+        function logout() {
+            sessionStorage.removeItem('currentUser');
+            window.location.href = 'login.html';
+        }
+        
+        function showError(message) {
+            errorContainer.textContent = message;
+            errorContainer.style.display = 'block';
+        }
+        
+        // Mock-функции для демонстрации
+        async function mockAnalyzeCommunity(link) {
+            return new Promise(resolve => {
+                setTimeout(() => {
+                    resolve({
+                        name: "Крутое сообщество",
+                        link: link,
+                        photo_200: "https://sun9-12.userapi.com/impg/...jpg?size=200x200&quality=96&sign=...",
+                        description: "Это описание моего сообщества в VK с интересным контентом и активными подписчиками",
+                        members_count: 12500,
+                        posts_count: 345,
+                        created_at: 1451606400,
+                        is_closed: false,
+                        avg_likes: 245,
+                        avg_comments: 32,
+                        avg_reposts: 18,
+                        avg_views: 3200,
+                        engagement_rate: 9.2,
+                        posts_per_week: 7,
+                        mainTopic: "Технологии",
+                        top_keywords: [
+                            { word: "технологии", count: 45 },
+                            { word: "гаджеты", count: 32 },
+                            { word: "новости", count: 28 },
+                            { word: "обзор", count: 21 },
+                            { word: "смартфон", count: 18 }
+                        ],
+                        topic_distribution: [
+                            { topic: "Технологии", value: 45 },
+                            { topic: "Новости", value: 25 },
+                            {
