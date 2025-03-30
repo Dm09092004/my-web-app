@@ -3,17 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Анализ вашего сообщества VK</title>
+    <title>Анализ VK сообществ</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             line-height: 1.6;
-            max-width: 1000px;
-            margin: 0 auto;
+            margin: 0;
             padding: 20px;
             background-color: #f5f5f5;
             color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
         }
         .input-container, .result-container {
             background-color: white;
@@ -22,10 +25,60 @@
             padding: 25px;
             margin-bottom: 20px;
         }
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+        }
+        .tab.active {
+            border-bottom-color: #4a76a8;
+            font-weight: 600;
+            color: #4a76a8;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"], input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4a76a8;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #3a6698;
+        }
         .loading {
             text-align: center;
+            padding: 20px;
             font-style: italic;
-            color: #818c99;
+            color: #666;
             display: none;
         }
         .error {
@@ -34,12 +87,13 @@
             padding: 15px;
             border-radius: 4px;
             margin: 20px 0;
+            display: none;
         }
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
             gap: 15px;
-            margin-top: 20px;
+            margin: 20px 0;
         }
         .stat-card {
             background-color: #f0f7ff;
@@ -57,11 +111,9 @@
             font-size: 14px;
             color: #666;
         }
-        .section {
-            margin-top: 30px;
-            padding: 20px;
-            background-color: #f8f9fa;
-            border-radius: 8px;
+        .chart-container {
+            height: 300px;
+            margin: 20px 0;
         }
         .topic-tags {
             display: flex;
@@ -80,20 +132,29 @@
             background-color: #2c4a6e;
             font-weight: bold;
         }
-        .chart-container {
-            width: 80%;
-            margin: 20px auto;
+        .group-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            background-color: white;
         }
-        .clearfix::after {
-            content: "";
-            display: table;
-            clear: both;
+        .group-name {
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 5px;
+            color: #2c4a6e;
         }
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
+        .group-info {
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        .group-link {
+            color: #4a76a8;
+            text-decoration: none;
+        }
+        .group-link:hover {
+            text-decoration: underline;
         }
         .logout-btn {
             background-color: #f44336;
@@ -102,62 +163,82 @@
             border: none;
             border-radius: 4px;
             cursor: pointer;
+            float: right;
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>Анализ вашего сообщества VK</h1>
+    <div class="container">
         <button class="logout-btn" id="logoutBtn">Выйти</button>
-    </div>
-
-    <div id="loading" class="loading">Загрузка данных и анализ сообщества...</div>
-    <div id="errorContainer" class="error" style="display: none;"></div>
-
-    <div id="content" style="display: none;">
-        <div class="result-container">
-            <div id="account-info"></div>
-            <div id="activity-stats" class="section">
-                <h2>Активность в последних постах</h2>
-                <div id="post-stats-grid" class="stats-grid"></div>
-                <div class="chart-container">
-                    <canvas id="activityChart"></canvas>
+        <h1>Анализ вашего сообщества VK</h1>
+        
+        <div id="loading" class="loading">Загрузка данных и анализ сообщества...</div>
+        <div id="error" class="error"></div>
+        
+        <div id="content" style="display: none;">
+            <div class="tabs">
+                <div class="tab active" data-tab="main">Основная информация</div>
+                <div class="tab" data-tab="posts">Анализ постов</div>
+                <div class="tab" data-tab="competitors">Конкуренты</div>
+            </div>
+            
+            <div id="mainTab" class="tab-content active">
+                <div class="result-container">
+                    <div id="account-info"></div>
+                    <div id="activity-stats">
+                        <h2>Активность в последних постах</h2>
+                        <div id="post-stats-grid" class="stats-grid"></div>
+                        <div class="chart-container">
+                            <canvas id="activityChart"></canvas>
+                        </div>
+                    </div>
+                    <div id="content-analysis">
+                        <h2>Ключевая деятельность</h2>
+                        <div id="main-topic"></div>
+                        <h3>Основные темы контента:</h3>
+                        <div id="topic-tags" class="topic-tags"></div>
+                    </div>
                 </div>
             </div>
-            <div id="content-analysis" class="section">
-                <h2>Ключевая деятельность</h2>
-                <div id="main-topic"></div>
-                <h3>Основные темы контента:</h3>
-                <div id="topic-tags" class="topic-tags"></div>
-                <div class="chart-container">
-                    <canvas id="topicsChart"></canvas>
+            
+            <div id="postsTab" class="tab-content">
+                <div class="result-container">
+                    <h2>Анализ последних постов</h2>
+                    <div id="posts-stats" class="stats-grid"></div>
+                    <div id="posts-list"></div>
+                </div>
+            </div>
+            
+            <div id="competitorsTab" class="tab-content">
+                <div class="result-container">
+                    <h2>Поиск конкурентов</h2>
+                    <div class="form-group">
+                        <label for="searchQuery">Ключевое слово для поиска:</label>
+                        <input type="text" id="searchQuery" placeholder="Введите ключевое слово">
+                    </div>
+                    <button onclick="searchCompetitors()">Найти конкурентов</button>
+                    <div id="competitors-loading" class="loading" style="display: none;"></div>
+                    <div id="competitors-error" class="error" style="display: none;"></div>
+                    <div id="groupsList" style="margin-top: 20px;"></div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        const API_KEY = 'd5c4f4b2d5c4f4b2d5c4f4b29cd6eafbecdd5c4d5c4f4b2b22316f4f109a2c5e8405368';
-        const BASE_URL = 'https://api.vk.com/method/';
+        // Токен доступа VK API (в реальном проекте используйте серверный прокси!)
+        const VK_TOKEN = 'vk1.a.LlX8KFYYY5-3_9hYwV9MLn4R_PTnYRvHtZyXKEZsP4H7mt49Ti96VkiAXqWbAAq3ofmUJbSAte2A13ufa-TlrdfHX-EVdIrWxU2hxifxPuqnR5FetRtE_8VGluwZCGbJlVp2ZTE-BemX9IhaR8MOjnlVVIFTrCFaf5pTHvElvfyirkiOXUJLde1ylsixL4hLnLUuX1Lui29KWkdkSPFFwQ';
+        const VK_API_VERSION = '5.131';
         
-        // Категории для анализа тем
-        const TOPIC_CATEGORIES = {
-            'Технологии': ['технологи', 'гаджет', 'смартфон', 'приложен', 'программир', 'it'],
-            'Бизнес': ['бизнес', 'стартап', 'компани', 'финанс', 'маркетинг'],
-            'Образование': ['образован', 'курс', 'обучен', 'школ', 'университет'],
-            'Здоровье': ['здоровь', 'медицин', 'диет', 'спорт', 'фитнес'],
-            'Развлечения': ['кино', 'музык', 'игр', 'сериал', 'мероприят'],
-            'Новости': ['новост', 'событ', 'политик', 'экономик']
-        };
-
         // Текущие данные анализа
         let currentAnalysis = null;
         
         // DOM элементы
         const loadingElement = document.getElementById('loading');
-        const errorContainer = document.getElementById('errorContainer');
+        const errorElement = document.getElementById('error');
         const contentElement = document.getElementById('content');
         const logoutBtn = document.getElementById('logoutBtn');
+        const tabs = document.querySelectorAll('.tab');
         
         // Инициализация
         document.addEventListener('DOMContentLoaded', async function() {
@@ -169,7 +250,18 @@
             }
             
             // Обработчики событий
-            logoutBtn.addEventListener('click', logout);
+            logoutBtn.addEventListener('click', function() {
+                sessionStorage.removeItem('currentUser');
+                window.location.href = 'login.html';
+            });
+            
+            // Переключение табов
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const tabId = this.getAttribute('data-tab');
+                    switchTab(tabId);
+                });
+            });
             
             // Загружаем и анализируем сообщество пользователя
             try {
@@ -182,7 +274,13 @@
                 }
                 
                 // Анализируем сообщество
-                await analyzeCommunity(vkLink);
+                currentAnalysis = await analyzeCommunity(vkLink);
+                
+                // Отображаем результаты
+                displayAccountInfo(currentAnalysis.accountInfo);
+                displayActivityStats(currentAnalysis.activityStats);
+                displayContentAnalysis(currentAnalysis.mainTopic, currentAnalysis.topics);
+                displayPostsAnalysis(currentAnalysis.posts);
                 
                 // Показываем контент
                 loadingElement.style.display = 'none';
@@ -194,6 +292,18 @@
                 loadingElement.style.display = 'none';
             }
         });
+        
+        function switchTab(tabId) {
+            // Убираем активный класс у всех табов
+            tabs.forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Добавляем активный класс выбранному табу
+            document.querySelector(`.tab[data-tab="${tabId}"]`).classList.add('active');
+            document.getElementById(`${tabId}Tab`).classList.add('active');
+        }
         
         async function analyzeCommunity(groupUrl) {
             try {
@@ -215,8 +325,7 @@
                 // Анализируем тематику
                 const {mainTopic, topics} = analyzeTopics(posts);
                 
-                // Сохраняем анализ
-                currentAnalysis = {
+                return {
                     accountInfo,
                     activityStats,
                     mainTopic,
@@ -224,16 +333,11 @@
                     posts
                 };
                 
-                // Отображаем результаты
-                displayAccountInfo(accountInfo);
-                displayActivityStats(activityStats);
-                displayContentAnalysis(mainTopic, topics);
-                
             } catch (error) {
                 throw error;
             }
         }
-
+        
         function extractGroupName(url) {
             try {
                 const cleanUrl = url.split('?')[0].split('#')[0];
@@ -242,7 +346,7 @@
                 throw new Error('Некорректный URL сообщества');
             }
         }
-
+        
         async function getGroupId(groupName) {
             if (groupName.startsWith('club')) {
                 return '-' + groupName.substring(4);
@@ -252,7 +356,7 @@
                 return '-' + groupName;
             } else {
                 const response = await fetchApi(
-                    `${BASE_URL}groups.getById?group_id=${groupName}&access_token=${API_KEY}&v=5.131`
+                    `groups.getById?group_id=${groupName}&access_token=${VK_TOKEN}&v=${VK_API_VERSION}`
                 );
                 
                 const data = await response.json();
@@ -268,12 +372,12 @@
                 return '-' + data.response[0].id;
             }
         }
-
+        
         async function fetchAccountInfo(groupId) {
             const response = await fetchApi(
-                `${BASE_URL}groups.getById?group_id=${groupId.substring(1)}` + 
+                `groups.getById?group_id=${groupId.substring(1)}` + 
                 `&fields=description,members_count,counters,status,activity,photo_200` +
-                `&access_token=${API_KEY}&v=5.131`
+                `&access_token=${VK_TOKEN}&v=${VK_API_VERSION}`
             );
             
             const data = await response.json();
@@ -288,12 +392,12 @@
             
             return data.response[0];
         }
-
+        
         async function fetchGroupPosts(groupId) {
             const response = await fetchApi(
-                `${BASE_URL}wall.get?owner_id=${groupId}&count=20&extended=1` + 
+                `wall.get?owner_id=${groupId}&count=20&extended=1` + 
                 `&fields=likes,comments,attachments` +
-                `&access_token=${API_KEY}&v=5.131`
+                `&access_token=${VK_TOKEN}&v=${VK_API_VERSION}`
             );
             
             const data = await response.json();
@@ -308,19 +412,21 @@
             
             return data.response.items;
         }
-
+        
         function analyzeActivity(posts) {
             let totalLikes = 0;
             let totalComments = 0;
+            let totalReposts = 0;
+            let totalViews = 0;
             let totalPhotos = 0;
             let totalVideos = 0;
             
             posts.forEach(post => {
-                // Считаем лайки и комментарии
                 totalLikes += post.likes?.count || 0;
                 totalComments += post.comments?.count || 0;
+                totalReposts += post.reposts?.count || 0;
+                totalViews += post.views?.count || 0;
                 
-                // Считаем фото и видео в attachments
                 if (post.attachments) {
                     post.attachments.forEach(attach => {
                         if (attach.type === 'photo') totalPhotos++;
@@ -331,18 +437,24 @@
             
             const avgLikes = posts.length > 0 ? Math.round(totalLikes / posts.length) : 0;
             const avgComments = posts.length > 0 ? Math.round(totalComments / posts.length) : 0;
+            const avgReposts = posts.length > 0 ? Math.round(totalReposts / posts.length) : 0;
+            const avgViews = posts.length > 0 ? Math.round(totalViews / posts.length) : 0;
             
             return {
                 totalPosts: posts.length,
                 totalLikes,
                 totalComments,
+                totalReposts,
+                totalViews,
                 totalPhotos,
                 totalVideos,
                 avgLikes,
-                avgComments
+                avgComments,
+                avgReposts,
+                avgViews
             };
         }
-
+        
         function analyzeTopics(posts) {
             // Собираем весь текст постов
             let allText = posts
@@ -350,6 +462,16 @@
                 .join(' ')
                 .replace(/[^\w\sа-яА-Я]/g, ' ')
                 .replace(/\s+/g, ' ');
+            
+            // Категории для анализа тем
+            const TOPIC_CATEGORIES = {
+                'Технологии': ['технологи', 'гаджет', 'смартфон', 'приложен', 'программир', 'it'],
+                'Бизнес': ['бизнес', 'стартап', 'компани', 'финанс', 'маркетинг'],
+                'Образование': ['образован', 'курс', 'обучен', 'школ', 'университет'],
+                'Здоровье': ['здоровь', 'медицин', 'диет', 'спорт', 'фитнес'],
+                'Развлечения': ['кино', 'музык', 'игр', 'сериал', 'мероприят'],
+                'Новости': ['новост', 'событ', 'политик', 'экономик']
+            };
             
             // Анализируем категории
             const categoryScores = {};
@@ -381,12 +503,12 @@
             
             return {mainTopic, topics};
         }
-
+        
         function isStopWord(word) {
             const stopWords = ['это', 'что', 'как', 'для', 'или', 'но', 'они', 'мы'];
             return stopWords.includes(word.toLowerCase());
         }
-
+        
         function displayAccountInfo(account) {
             const accountInfoElement = document.getElementById('account-info');
             
@@ -419,7 +541,7 @@
             
             accountInfoElement.innerHTML = html;
         }
-
+        
         function displayActivityStats(stats) {
             const statsGrid = document.getElementById('post-stats-grid');
             
@@ -437,12 +559,12 @@
                     <div class="stat-label">всего комментариев</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-value">${stats.totalPhotos}</div>
-                    <div class="stat-label">фото в постах</div>
+                    <div class="stat-value">${stats.totalReposts}</div>
+                    <div class="stat-label">всего репостов</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-value">${stats.totalVideos}</div>
-                    <div class="stat-label">видео в постах</div>
+                    <div class="stat-value">${stats.totalViews}</div>
+                    <div class="stat-label">всего просмотров</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-value">${stats.avgLikes}</div>
@@ -451,6 +573,10 @@
                 <div class="stat-card">
                     <div class="stat-value">${stats.avgComments}</div>
                     <div class="stat-label">комментов/пост</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${stats.avgReposts}</div>
+                    <div class="stat-label">репостов/пост</div>
                 </div>
             `;
             
@@ -462,7 +588,7 @@
                     labels: ['Лайки', 'Комментарии', 'Репосты', 'Просмотры'],
                     datasets: [{
                         label: 'Средние показатели на пост',
-                        data: [stats.avgLikes, stats.avgComments, 0, 0], // Добавьте данные для репостов и просмотров если есть
+                        data: [stats.avgLikes, stats.avgComments, stats.avgReposts, stats.avgViews],
                         backgroundColor: [
                             'rgba(75, 192, 192, 0.6)',
                             'rgba(54, 162, 235, 0.6)',
@@ -488,7 +614,7 @@
                 }
             });
         }
-
+        
         function displayContentAnalysis(mainTopic, topics) {
             document.getElementById('main-topic').innerHTML = `
                 Основное направление: <span style="color: #2c4a6e; font-weight: bold;">${mainTopic}</span>
@@ -496,31 +622,150 @@
             
             const topicTagsElement = document.getElementById('topic-tags');
             topicTagsElement.innerHTML = topics
-                .map(topic => `<span class="topic-tag">${topic}</span>`)
+                .map((topic, index) => `<span class="topic-tag ${index === 0 ? 'main-topic' : ''}">${topic}</span>`)
                 .join('');
+        }
+        
+        function displayPostsAnalysis(posts) {
+            const postsStatsElement = document.getElementById('posts-stats');
+            const postsListElement = document.getElementById('posts-list');
             
-            // График тематики (пример)
-            const ctx = document.getElementById('topicsChart').getContext('2d');
-            new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: [mainTopic, 'Другие темы'],
-                    datasets: [{
-                        data: [80, 20], // Примерные данные
-                        backgroundColor: [
-                            'rgba(74, 118, 168, 0.7)',
-                            'rgba(200, 200, 200, 0.7)'
-                        ],
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true
+            // Статистика по постам
+            let totalLength = 0;
+            let totalMedia = 0;
+            
+            posts.forEach(post => {
+                totalLength += post.text ? post.text.length : 0;
+                if (post.attachments) {
+                    totalMedia += post.attachments.length;
                 }
             });
+            
+            const avgLength = Math.round(totalLength / posts.length);
+            const avgMedia = (totalMedia / posts.length).toFixed(1);
+            
+            postsStatsElement.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-value">${posts.length}</div>
+                    <div class="stat-label">проанализировано постов</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${avgLength}</div>
+                    <div class="stat-label">средняя длина поста</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${avgMedia}</div>
+                    <div class="stat-label">медиа на пост</div>
+                </div>
+            `;
+            
+            // Список постов
+            let postsHTML = '<h3>Последние посты:</h3>';
+            
+            posts.slice(0, 5).forEach(post => {
+                const postDate = new Date(post.date * 1000).toLocaleDateString();
+                const likes = post.likes?.count || 0;
+                const comments = post.comments?.count || 0;
+                const reposts = post.reposts?.count || 0;
+                const views = post.views?.count || 0;
+                
+                postsHTML += `
+                    <div class="group-card">
+                        <div class="group-name">Пост от ${postDate}</div>
+                        <div class="group-info">${post.text || '<i>Текст отсутствует</i>'}</div>
+                        <div class="group-info">
+                            ❤️ ${likes} | 💬 ${comments} | ↩️ ${reposts} | 👁️ ${views}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            postsListElement.innerHTML = postsHTML;
         }
+        
+        function searchCompetitors() {
+            const query = document.getElementById('searchQuery').value.trim();
+            const resultsDiv = document.getElementById('groupsList');
+            const loadingDiv = document.getElementById('competitors-loading');
+            const errorDiv = document.getElementById('competitors-error');
+            
+            if (!query) {
+                errorDiv.textContent = 'Пожалуйста, введите ключевое слово для поиска';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            
+            // Очищаем предыдущие результаты
+            resultsDiv.innerHTML = '';
+            errorDiv.style.display = 'none';
+            loadingDiv.style.display = 'block';
+            
+            // Используем основную тему как ключевое слово, если поле пустое
+            const searchTerm = query || currentAnalysis?.mainTopic || 'сообщество';
+            
+            // Создаем JSONP запрос (обход CORS)
+            const callbackName = 'vkCallback_' + Date.now();
+            window[callbackName] = function(data) {
+                delete window[callbackName];
+                document.body.removeChild(script);
+                loadingDiv.style.display = 'none';
+                
+                if (data.error) {
+                    errorDiv.textContent = `Ошибка: ${data.error.error_msg}`;
+                    errorDiv.style.display = 'block';
+                    return;
+                }
+                
+                displayCompetitorsResults(data.response.items);
+            };
+            
+            const script = document.createElement('script');
+            script.src = `https://api.vk.com/method/groups.search?q=${encodeURIComponent(searchTerm)}&count=10&access_token=${VK_TOKEN}&v=${VK_API_VERSION}&callback=${callbackName}`;
+            document.body.appendChild(script);
+            
+            // Таймаут на случай ошибки
+            setTimeout(() => {
+                if (loadingDiv.style.display !== 'none') {
+                    errorDiv.textContent = 'Превышено время ожидания ответа от сервера';
+                    errorDiv.style.display = 'block';
+                    loadingDiv.style.display = 'none';
+                }
+            }, 10000);
+        }
+        
+        function displayCompetitorsResults(groups) {
+            const resultsDiv = document.getElementById('groupsList');
+            
+            if (!groups || groups.length === 0) {
+                resultsDiv.innerHTML = '<p>Конкурирующие сообщества не найдены</p>';
+                return;
+            }
+            
+            let html = `<h3>Найдено сообществ: ${groups.length}</h3>`;
+            
+            groups.forEach(group => {
+                const groupId = group.id;
+                const groupName = group.name;
+                const membersCount = group.members_count ? group.members_count.toLocaleString() : 'неизвестно';
+                const groupLink = `https://vk.com/club${groupId}`;
+                const description = group.description ? group.description.substring(0, 150) + '...' : '';
+                
+                html += `
+                <div class="group-card">
+                    <div class="group-name">${groupName}</div>
+                    <div class="group-info">Участников: ${membersCount}</div>
+                    ${description ? `<div class="group-info">${description}</div>` : ''}
+                    <div class="group-info">
+                        Ссылка: <a href="${groupLink}" class="group-link" target="_blank">${groupLink}</a>
+                    </div>
+                </div>
+                `;
+            });
 
-        async function fetchApi(url) {
+            resultsDiv.innerHTML = html;
+        }
+        
+        async function fetchApi(method) {
             try {
                 // Пробуем разные прокси
                 const proxies = [
@@ -531,7 +776,7 @@
                 
                 for (const proxy of proxies) {
                     try {
-                        const response = await fetch(proxy + url, {
+                        const response = await fetch(proxy + `https://api.vk.com/method/${method}`, {
                             headers: {
                                 'X-Requested-With': 'XMLHttpRequest'
                             }
@@ -548,15 +793,10 @@
                 throw new Error(`Ошибка сети: ${error.message}`);
             }
         }
-
-        function showError(message) {
-            errorContainer.textContent = message;
-            errorContainer.style.display = 'block';
-        }
         
-        function logout() {
-            sessionStorage.removeItem('currentUser');
-            window.location.href = 'login.html';
+        function showError(message) {
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
         }
     </script>
 </body>
