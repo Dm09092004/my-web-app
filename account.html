@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Личный кабинет</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .user-info {
+            background-color: #f5f5f5;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .logout-btn {
+            background-color: #f44336;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Личный кабинет</h1>
+    
+    <div id="userInfo" class="user-info">
+        <!-- Сюда загрузится информация о пользователе -->
+    </div>
+    
+    <button id="logoutBtn" class="logout-btn">Выйти</button>
+
+    <script>
+        // Проверяем, авторизован ли пользователь
+        const currentUser = JSON.parse(sessionStorage.getItem('currentUser'));
+        
+        if (!currentUser) {
+            // Если пользователь не авторизован, перенаправляем на страницу регистрации
+            window.location.href = 'register.html';
+        } else {
+            // Отображаем информацию о пользователе
+            document.getElementById('userInfo').innerHTML = `
+                <h2>Добро пожаловать, ${currentUser.nickname}!</h2>
+                <p><strong>Дата регистрации:</strong> ${new Date(currentUser.registration_date).toLocaleString()}</p>
+                <p><strong>Ссылка на VK:</strong> <a href="${currentUser.vk_link}" target="_blank">${currentUser.vk_link}</a></p>
+            `;
+        }
+        
+        // Обработчик кнопки выхода
+        document.getElementById('logoutBtn').addEventListener('click', function() {
+            sessionStorage.removeItem('currentUser');
+            window.location.href = 'register.html';
+        });
+    </script>
+</body>
+</html>

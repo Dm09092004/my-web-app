@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Регистрация</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .error {
+            color: red;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Регистрация</h1>
+    <form id="registrationForm">
+        <div class="form-group">
+            <label for="nickname">Никнейм:</label>
+            <input type="text" id="nickname" required>
+            <div id="nicknameError" class="error"></div>
+        </div>
+        
+        <div class="form-group">
+            <label for="password">Пароль:</label>
+            <input type="password" id="password" required>
+            <div id="passwordError" class="error"></div>
+        </div>
+        
+        <div class="form-group">
+            <label for="vkLink">Ссылка на VK сообщество:</label>
+            <input type="text" id="vkLink" placeholder="https://vk.com/..." required>
+            <div id="vkLinkError" class="error"></div>
+        </div>
+        
+        <button type="submit">Зарегистрироваться</button>
+    </form>
+
+    <script>
+        document.getElementById('registrationForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Очищаем сообщения об ошибках
+            document.getElementById('nicknameError').textContent = '';
+            document.getElementById('passwordError').textContent = '';
+            document.getElementById('vkLinkError').textContent = '';
+            
+            // Получаем значения полей
+            const nickname = document.getElementById('nickname').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const vkLink = document.getElementById('vkLink').value.trim();
+            
+            // Валидация
+            let isValid = true;
+            
+            if (nickname.length < 3) {
+                document.getElementById('nicknameError').textContent = 'Никнейм должен содержать минимум 3 символа';
+                isValid = false;
+            }
+            
+            if (password.length < 6) {
+                document.getElementById('passwordError').textContent = 'Пароль должен содержать минимум 6 символов';
+                isValid = false;
+            }
+            
+            if (!vkLink.startsWith('https://vk.com/')) {
+                document.getElementById('vkLinkError').textContent = 'Ссылка должна начинаться с https://vk.com/';
+                isValid = false;
+            }
+            
+            if (!isValid) return;
+            
+            // Создаем объект пользователя
+            const newUser = {
+                nickname: nickname,
+                password: password, // В реальном приложении нужно хэшировать пароль!
+                vk_link: vkLink,
+                registration_date: new Date().toISOString()
+            };
+            
+            // Сохраняем пользователя
+            if (saveUser(newUser)) {
+                // Сохраняем текущего пользователя в сессию
+                sessionStorage.setItem('currentUser', JSON.stringify(newUser));
+                
+                // Переходим на страницу личного кабинета
+                window.location.href = 'account.html';
+            }
+        });
+        
+        function saveUser(user) {
+            // Получаем текущую базу данных из localStorage
+            let db = JSON.parse(localStorage.getItem('users_db')) || { users: [] };
+            
+            // Проверяем, есть ли уже пользователь с таким ником
+            const userExists = db.users.some(u => u.nickname === user.nickname);
+            if (userExists) {
+                document.getElementById('nicknameError').textContent = 'Пользователь с таким ником уже существует';
+                return false;
+            }
+            
+            // Добавляем нового пользователя
+            db.users.push(user);
+            
+            // Сохраняем обновленную базу
+            localStorage.setItem('users_db', JSON.stringify(db));
+            
+            return true;
+        }
+    </script>
+</body>
+</html>
