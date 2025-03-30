@@ -3,163 +3,147 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Создание аккаунта</title>
+    <title>Регистрация пользователя</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f5f5f0;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 20px;
         }
-        
-        .container {
-            background-color: #8B4513;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
-            width: 350px;
-        }
-        
-        h1 {
-            color: #FFF8DC;
-            text-align: center;
-            margin-bottom: 25px;
-        }
-        
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
-        
         label {
             display: block;
-            color: #FFF8DC;
             margin-bottom: 5px;
             font-weight: bold;
         }
-        
-        input {
+        input[type="text"],
+        input[type="password"] {
             width: 100%;
-            padding: 10px;
-            border: 1px solid #A0522D;
-            border-radius: 5px;
-            background-color: #FFF8DC;
+            padding: 8px;
             box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
         }
-        
-        input:focus {
-            outline: none;
-            border-color: #D2691E;
-            box-shadow: 0 0 5px rgba(210, 105, 30, 0.5);
-        }
-        
-        .btn {
-            background-color: #A0522D;
+        button {
+            background-color: #4CAF50;
             color: white;
+            padding: 10px 15px;
             border: none;
-            padding: 12px 20px;
-            border-radius: 5px;
+            border-radius: 4px;
             cursor: pointer;
-            width: 100%;
-            font-size: 16px;
-            transition: background-color 0.3s;
         }
-        
-        .btn:hover {
-            background-color: #D2691E;
+        button:hover {
+            background-color: #45a049;
         }
-        
-        .login-link {
-            text-align: center;
-            margin-top: 15px;
+        .error {
+            color: red;
+            margin-top: 5px;
         }
-        
-        .login-link a {
-            color: #D2B48C;
-            text-decoration: none;
-        }
-        
-        .login-link a:hover {
-            text-decoration: underline;
-        }
-        
-        .message {
-            text-align: center;
-            margin-top: 15px;
-            color: #FFF8DC;
-            font-weight: bold;
+        .success {
+            color: green;
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Создать аккаунт</h1>
-        <form id="registrationForm">
-            <div class="form-group">
-                <label for="username">Никнейм:</label>
-                <input type="text" id="username" name="username" required>
-            </div>
-            
-            <div class="form-group">
-                <label for="password">Пароль:</label>
-                <input type="password" id="password" name="password" required>
-            </div>
-            
-            <div class="form-group">
-                <label for="vk-link">Ссылка на ВКонтакте:</label>
-                <input type="url" id="vk-link" name="vk-link" placeholder="https://vk.com/username" required>
-            </div>
-            
-            <button type="submit" class="btn">Зарегистрироваться</button>
-            
-            <div class="login-link">
-                <p>Уже есть аккаунт? <a href="#">Войти</a></p>
-            </div>
-            
-            <div id="message" class="message"></div>
-        </form>
-    </div>
+    <h1>Регистрация пользователя</h1>
+    <form id="registrationForm">
+        <div class="form-group">
+            <label for="nickname">Никнейм:</label>
+            <input type="text" id="nickname" required>
+            <div id="nicknameError" class="error"></div>
+        </div>
+        
+        <div class="form-group">
+            <label for="password">Пароль:</label>
+            <input type="password" id="password" required>
+            <div id="passwordError" class="error"></div>
+        </div>
+        
+        <div class="form-group">
+            <label for="vkLink">Ссылка на VK сообщество:</label>
+            <input type="text" id="vkLink" placeholder="https://vk.com/..." required>
+            <div id="vkLinkError" class="error"></div>
+        </div>
+        
+        <button type="submit">Зарегистрироваться</button>
+        <div id="successMessage" class="success"></div>
+    </form>
 
     <script>
         document.getElementById('registrationForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
-            // Получаем данные из формы
-            const formData = {
-                username: document.getElementById('username').value,
-                password: document.getElementById('password').value,
-                vk_link: document.getElementById('vk-link').value,
+            // Очищаем сообщения об ошибках
+            document.getElementById('nicknameError').textContent = '';
+            document.getElementById('passwordError').textContent = '';
+            document.getElementById('vkLinkError').textContent = '';
+            document.getElementById('successMessage').textContent = '';
+            
+            // Получаем значения полей
+            const nickname = document.getElementById('nickname').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const vkLink = document.getElementById('vkLink').value.trim();
+            
+            // Валидация
+            let isValid = true;
+            
+            if (nickname.length < 3) {
+                document.getElementById('nicknameError').textContent = 'Никнейм должен содержать минимум 3 символа';
+                isValid = false;
+            }
+            
+            if (password.length < 6) {
+                document.getElementById('passwordError').textContent = 'Пароль должен содержать минимум 6 символов';
+                isValid = false;
+            }
+            
+            if (!vkLink.startsWith('https://vk.com/')) {
+                document.getElementById('vkLinkError').textContent = 'Ссылка должна начинаться с https://vk.com/';
+                isValid = false;
+            }
+            
+            if (!isValid) return;
+            
+            // Создаем объект пользователя
+            const newUser = {
+                nickname: nickname,
+                password: password, // В реальном приложении нужно хэшировать пароль!
+                vk_link: vkLink,
                 registration_date: new Date().toISOString()
             };
             
-            // Отправляем данные на сервер для сохранения в JSON
-            fetch('save_user.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(formData)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if(data.success) {
-                    document.getElementById('message').textContent = 'Регистрация успешна!';
-                    document.getElementById('message').style.color = '#90EE90';
-                    document.getElementById('registrationForm').reset();
-                } else {
-                    document.getElementById('message').textContent = 'Ошибка: ' + data.error;
-                    document.getElementById('message').style.color = '#FF6347';
-                }
-            })
-            .catch(error => {
-                document.getElementById('message').textContent = 'Ошибка при отправке данных';
-                document.getElementById('message').style.color = '#FF6347';
-                console.error('Error:', error);
-            });
+            // Сохраняем в localStorage (альтернатива файлу для браузера)
+            saveUserToLocalStorage(newUser);
+            
+            // Показываем сообщение об успехе
+            document.getElementById('successMessage').textContent = 'Регистрация успешно завершена!';
+            document.getElementById('registrationForm').reset();
         });
+        
+        function saveUserToLocalStorage(user) {
+            // Получаем текущую базу данных из localStorage
+            let db = JSON.parse(localStorage.getItem('users_db')) || { users: [] };
+            
+            // Проверяем, есть ли уже пользователь с таким ником
+            const userExists = db.users.some(u => u.nickname === user.nickname);
+            if (userExists) {
+                document.getElementById('nicknameError').textContent = 'Пользователь с таким ником уже существует';
+                return;
+            }
+            
+            // Добавляем нового пользователя
+            db.users.push(user);
+            
+            // Сохраняем обновленную базу
+            localStorage.setItem('users_db', JSON.stringify(db));
+            
+            // Для демонстрации выводим текущую БД в консоль
+            console.log('Текущая база данных:', db);
+        }
     </script>
 </body>
 </html>
